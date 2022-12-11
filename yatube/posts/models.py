@@ -27,3 +27,6 @@ class Post(models.Model):
     class Meta:
         ordering = ['-pub_date']
         default_related_name = 'posts'
+
+    def __str__(self):
+        return self.text

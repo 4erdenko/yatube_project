@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}
+    {% if is_edit %}
+        Редактирование записи
+    {% else %}
+        Добавление новой записи
+    {% endif %}
+{% endblock %}
+{% block content %}
+    {% load user_filters %}
+    <div class="row justify-content-center">
+        <div class="col-md-8 p-5">
+            <div class="card">
+                <div class="card-header">
+                    {% if is_edit %}
+                        Редактировать запись
+                    {% else %}
+                        Новая запись
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% include 'includes/error_control.html' %}
+                    {% if user == post.author %}
+                        <form method="post" action="{% url 'posts:post_edit' post_id %}">
+                    {% else %}
+                        <form method="post" action="{% url 'posts:post_create' %}">
+                    {% endif %}
+                    {% csrf_token %}
+                    {% include 'includes/required.html' %}
+                    {% if is_edit %}
+                        <div class="col-md-6 offset-md-4">
+                            <button type="submit" class="btn btn-primary">
+                                Сохранить
+                            </button>
+                        </div>
+                    {% else %}
+                        <div class="col-md-6 offset-md-4">
+                            <button type="submit" class="btn btn-primary">
+                                Добавить запись
+                            </button>
+                        </div>
+                    {% endif %}
+                    </form>
+                </div> <!-- card body -->
+            </div> <!-- card -->
+        </div> <!-- col -->
+    </div> <!-- row -->
+
+{% endblock %}

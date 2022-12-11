@@ -1,17 +1,9 @@
-{% extends 'base.html' %}
-{% block title %}{{ title }}{% endblock title %}
-{% block content %}
-    <div class="row text-left p-3 justify-content-center">
-        <h1>
-            {% block header %}{{ group }}{% endblock %}
-        </h1>
-    </div>
     {% for post in page_obj %}
         <div class="mx-5">
             <ul>
                 <li>
                     <b>Группа:</b>
-                    <p>{{ group.title }}</p>
+                    <p>{{ post.group.title }}</p>
                     <b>Автор:</b> {{ post.author.get_full_name }}
                 </li>
                 <li>
@@ -23,5 +15,3 @@
         {% if not forloop.last %}
             <hr>{% endif %}
     {% endfor %}
-    {% include 'posts/paginator.html' %}
-{% endblock %}
