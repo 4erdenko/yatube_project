@@ -20,13 +20,13 @@
                 </div>
                 <div class="card-body">
                     {% include 'includes/error_control.html' %}
-                    {% if user == post.author %}
-                        <form method="post" action="{% url 'posts:post_edit' post_id %}">
+                    {% if is_edit %}
+                        <form method="post" action="{% url 'posts:post_edit' post.id %}">
                     {% else %}
                         <form method="post" action="{% url 'posts:post_create' %}">
                     {% endif %}
                     {% csrf_token %}
-                    {% include 'includes/required.html' %}
+                    {% include 'includes/common_form.html' %}
                     {% if is_edit %}
                         <div class="col-md-6 offset-md-4">
                             <button type="submit" class="btn btn-primary">

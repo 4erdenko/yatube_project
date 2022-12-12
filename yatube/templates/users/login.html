@@ -11,7 +11,7 @@
                     {% include 'includes/error_control.html' %}
                     <form method="post" action="{% url 'users:login' %}">
                         {% csrf_token %}
-                        {% include 'includes/required.html' %}
+                        {% include 'includes/common_form.html' %}
                         <div class="col-md-6 offset-md-4">
                             <button type="submit" class="btn btn-primary">
                                 Войти

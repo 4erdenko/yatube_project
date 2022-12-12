@@ -1,17 +1,17 @@
-    {% for post in page_obj %}
-        <div class="mx-5">
-            <ul>
-                <li>
-                    <b>Группа:</b>
-                    <p>{{ post.group.title }}</p>
-                    <b>Автор:</b> {{ post.author.get_full_name }}
-                </li>
-                <li>
-                    <b>Дата публикации:</b> {{ post.pub_date|date:"d E Y" }}
-                </li>
-            </ul>
-            <p>{{ post.text|linebreaksbr }}</p>
-        </div>
-        {% if not forloop.last %}
-            <hr>{% endif %}
-    {% endfor %}
+{% for post in page_obj %}
+    <div class="mx-5">
+        <ul>
+            <li>
+                <b>Группа:</b>
+                <p>{{ post.group.title }}</p>
+                <b>Автор:</b> {{ post.author.get_full_name }}
+            </li>
+            <li>
+                <b>Дата публикации:</b> {{ post.pub_date|date:"d E Y" }}
+            </li>
+        </ul>
+        <p>{{ post.text|linebreaksbr }}</p>
+    </div>
+    {% if not forloop.last %}
+        <hr>{% endif %}
+{% endfor %}

@@ -1,10 +1,12 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Post, Group
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.contrib.auth import get_user_model
+from django.shortcuts import render, get_object_or_404, redirect
+
 from .forms import PostForm
-from django.conf import settings
+from .models import Post, Group
+
 User = get_user_model()
 
 
@@ -70,7 +72,6 @@ def post_create(request):
         form = form.save(commit=False)
         form.author = request.user
         form.save()
-
         return redirect('posts:profile', username=form.author)
     return render(request, 'posts/create_post.html/', context)
 
@@ -87,5 +88,6 @@ def post_edit(request, post_id):
     context = {
         'form': form,
         'is_edit': True,
+        'post': post,
     }
     return render(request, 'posts/create_post.html/', context)
