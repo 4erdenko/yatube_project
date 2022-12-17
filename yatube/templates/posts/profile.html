@@ -19,7 +19,9 @@
             <p style="text-indent: 25px;">{{ post.text|linebreaksbr }}</p>
             <a href="{% url 'posts:post_detail' post.pk %}">подробная информация </a>
             {% if post.group %}
-                <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы {{ post.group }}</a>
+                <p>
+                    <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы {{ post.group }}</a>
+                </p>
             {% endif %}
             {% if not forloop.last %}
                 <hr>
