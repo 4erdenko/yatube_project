@@ -29,4 +29,4 @@ class Post(models.Model):
         default_related_name = 'posts'
 
     def __str__(self):
-        return self.text
+        return self.text[:15]
