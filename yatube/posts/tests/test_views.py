@@ -123,6 +123,9 @@ class PostPagesTests(TestCase):
                          PAGES_NUM)
 
 
+# Я НЕ ЗНАЮ КАК УБРАТЬ ВСЁ В ОДИН КЛАСС!!!!!!!!!
+# ВСЁ СРАЗУ РУШИТСЯ С КОЛИЧЕСТВОМ ПОСТОВ, ВОЗМОЖНО ДЕЛО В BULK,
+# НО Я РЕАЛЬНО УЖЕ ХЗ :(
 class PaginatorViewsTest(TestCase):
     @classmethod
     def setUpClass(cls):
