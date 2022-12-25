@@ -13,39 +13,39 @@ class PostPagesTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.authorized_author = Client()
-        cls.user = User.objects.create(username="TestUser")
+        cls.user = User.objects.create_user(username="TestUser")
         cls.group = Group.objects.create(
             title="Тестовая группа",
             slug="test-slug",
             description="Тестовое описание",
         )
-        cls.post = Post.objects.create(
-            author=cls.user,
-            text='Тестовый пост',
-            group=cls.group,
-            id='1',
-        )
-        cls.templates_pages_names = {
-            reverse('posts:index'): 'posts/index.html',
-            reverse(
-                'posts:group_list', kwargs={'slug': cls.group.slug}
-            ): 'posts/group_list.html',
-            reverse(
-                'posts:profile', kwargs={'username': cls.post.author}
-            ): 'posts/profile.html',
-            reverse(
-                'posts:post_detail', kwargs={'post_id': cls.post.id}
-            ): 'posts/post_detail.html',
-            reverse(
-                'posts:post_edit', kwargs={'post_id': cls.post.id}
-            ): 'posts/create_post.html/',
-            reverse('posts:post_create'): 'posts/create_post.html/',
-        }
 
     def setUp(self):
         self.guest_client = Client()
         self.authorized_client = Client()
-        self.authorized_client.force_login(PostPagesTests.user)
+        self.authorized_client.force_login(self.user)
+        self.post = Post.objects.create(
+            author=self.user,
+            text='Тестовый пост',
+            group=self.group,
+            id='1',
+        )
+        self.templates_pages_names = {
+            reverse('posts:index'): 'posts/index.html',
+            reverse(
+                'posts:group_list', kwargs={'slug': self.group.slug}
+            ): 'posts/group_list.html',
+            reverse(
+                'posts:profile', kwargs={'username': self.post.author}
+            ): 'posts/profile.html',
+            reverse(
+                'posts:post_detail', kwargs={'post_id': self.post.id}
+            ): 'posts/post_detail.html',
+            reverse(
+                'posts:post_edit', kwargs={'post_id': self.post.id}
+            ): 'posts/create_post.html/',
+            reverse('posts:post_create'): 'posts/create_post.html/',
+        }
 
     def test_pages_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
@@ -65,7 +65,7 @@ class PostPagesTests(TestCase):
 
     def test_group_list_show_correct_context(self):
         """Список постов в шаблоне group_list равен ожидаемому контексту."""
-        response = self.guest_client.get(
+        response = self.authorized_client.get(
             reverse('posts:group_list', kwargs={'slug': self.group.slug})
         )
         self.assertEqual(
@@ -76,7 +76,7 @@ class PostPagesTests(TestCase):
 
     def test_profile_show_correct_context(self):
         """Список постов в шаблоне profile равен ожидаемому контексту."""
-        response = self.guest_client.get(
+        response = self.authorized_client.get(
             reverse('posts:profile', kwargs={'username': self.user.username})
         )
         self.assertIn('author', response.context)
@@ -85,7 +85,7 @@ class PostPagesTests(TestCase):
 
     def test_post_detail_show_correct_context(self):
         """Шаблон post_detail сформирован с правильным контекстом."""
-        response = self.guest_client.get(
+        response = self.authorized_client.get(
             reverse('posts:post_detail', kwargs={'post_id': self.post.id})
         )
         post_context = response.context.get('post')
@@ -122,38 +122,21 @@ class PostPagesTests(TestCase):
         self.assertEqual(response.context['page_obj'].paginator.count,
                          PAGES_NUM)
 
-
-# Я НЕ ЗНАЮ КАК УБРАТЬ ВСЁ В ОДИН КЛАСС!!!!!!!!!
-# ВСЁ СРАЗУ РУШИТСЯ С КОЛИЧЕСТВОМ ПОСТОВ, ВОЗМОЖНО ДЕЛО В BULK,
-# НО Я РЕАЛЬНО УЖЕ ХЗ :(
-class PaginatorViewsTest(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.authorized_author = Client()
-        cls.author = User.objects.create_user(username='TestUser1')
-        cls.group = Group.objects.create(
-            title='test_title',
-            description='test_description',
-            slug='test-slug'
-        )
-
-    def setUp(self):
+    def test_paginator(self):
+        self.post.delete()
         Post.objects.bulk_create(
             Post(
                 text=f'Текст {i}',
-                author=self.author,
+                author=self.user,
                 group=self.group
-            ) for i in range(TEMP_NUMB_FIRST_PAGE+TEMP_NUMB_SECOND_PAGE))
-
-    def test_paginator(self):
+            ) for i in range(TEMP_NUMB_FIRST_PAGE + TEMP_NUMB_SECOND_PAGE))
         pages = (
             (1, TEMP_NUMB_FIRST_PAGE),
             (2, TEMP_NUMB_SECOND_PAGE)
         )
         url_name = (
             reverse('posts:index'),
-            reverse('posts:profile', kwargs={'username': self.author}),
+            reverse('posts:profile', kwargs={'username': self.user.username}),
             reverse('posts:group_list',
                     kwargs={'slug': self.group.slug})
 
@@ -161,8 +144,5 @@ class PaginatorViewsTest(TestCase):
         for url in url_name:
             for page, count in pages:
                 with self.subTest(url=url, page=page):
-                    response = self.authorized_author.get(url,
-                                                          {'page': page})
-                    self.assertEqual(
-                        len(response.context['page_obj']), count
-                    )
+                    response = self.client.get(url, {'page': page})
+                    self.assertEqual(len(response.context['page_obj']), count)
