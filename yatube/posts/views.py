@@ -67,6 +67,7 @@ def post_create(request):
     form = PostForm(request.POST or None)
     context = {
         'form': form,
+        'is_edit': False,
     }
     if form.is_valid():
         form = form.save(commit=False)
