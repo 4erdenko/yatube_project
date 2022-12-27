@@ -21,22 +21,11 @@ class PostFormTests(TestCase):
         super().setUpClass()
         cls.auth_user = User.objects.create_user(username=AUTHOR_USERNAME)
         cls.group = Group.objects.create(
+            id=1,
             title=GROUP_TITLE,
             slug=SLUG,
-            description=GROUP_DESCRIPTION,
+            description=GROUP_DESCRIPTION
         )
-        cls.second_group = Group.objects.create(
-            title=SECOND_GROUP_TITLE,
-            slug=SECOND_SLUG,
-            description=SECOND_GROUP_DESCRIPTION,
-        )
-        cls.post = Post.objects.create(
-            author=cls.auth_user,
-            text=POST_TEXT,
-            group=cls.group,
-        )
-        cls.POST_DETAIL_URL = reverse('posts:post_detail', args=[cls.post.id])
-        cls.POST_EDIT_URL = reverse('posts:post_edit', args=[cls.post.id])
 
     def setUp(self):
         self.guest_client = Client()
@@ -51,34 +40,42 @@ class PostFormTests(TestCase):
         response = self.authorized_client.post(
             reverse('posts:post_create'), data=form_data, follow=True
         )
-        self.assertRedirects(
-            response,
-            reverse('posts:profile', kwargs={'username': self.auth_user.
-                    username})
-        )
-        post = Post.objects.all()[0]
+        self.assertRedirects(response, reverse(
+            'posts:profile', kwargs={'username': self.auth_user}))
+        post = Post.objects.first()
         self.assertEqual(post.text, form_data['text'])
         self.assertEqual(post.author, self.auth_user)
-        self.assertEqual(post.group.id, form_data['group'])
-        self.assertEqual(Post.objects.count(), +2)
+        self.assertEqual(post.group, self.group)
+        self.assertEqual(Post.objects.count(), 1)
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_post_edit(self):
         """Валидная форма изменяет запись в Post."""
-        form_data = {'text': 'Изменяем текст', 'group': self.second_group.id}
+        second_group = Group.objects.create(
+            title=SECOND_GROUP_TITLE,
+            slug=SECOND_SLUG,
+            description=SECOND_GROUP_DESCRIPTION,
+        )
+        post = Post.objects.create(
+            author=self.auth_user,
+            text=POST_TEXT,
+            group=self.group,
+        )
+        form_data = {'text': 'Изменяем текст', 'group': second_group.id}
+        post_edit_url = reverse('posts:post_edit', args=[post.id])
         response = self.authorized_client.post(
-            reverse('posts:post_edit', args=({self.post.id})),
+            reverse('posts:post_edit', args=({post.id})),
             data=form_data,
             follow=True,
         )
         self.assertRedirects(
             response,
-            reverse('posts:post_detail', kwargs={'post_id': self.post.id})
+            reverse('posts:post_detail', kwargs={'post_id': post.id})
         )
         edited_post = self.authorized_client.get(
-            self.POST_DETAIL_URL).context['post']
+            post_edit_url).context['post']
         self.assertEqual(edited_post.text, form_data['text'])
-        self.assertEqual(edited_post.group.id, form_data['group'])
+        self.assertEqual(edited_post.group, second_group)
         self.assertEqual(Post.objects.count(), +1)
         self.assertEqual(response.status_code, HTTPStatus.OK)
 

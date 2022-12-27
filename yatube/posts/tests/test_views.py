@@ -9,6 +9,8 @@ TEMP_NUMB_SECOND_PAGE = 3
 
 
 class PostPagesTests(TestCase):
+    """Создаем базовый класс тестирования."""
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -19,17 +21,15 @@ class PostPagesTests(TestCase):
             slug="test-slug",
             description="Тестовое описание",
         )
+        cls.post = Post.objects.create(
+            text='Тестовый пост',
+            author=PostPagesTests.user,
+            group=PostPagesTests.group
+        )
 
     def setUp(self):
-        self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
-        self.post = Post.objects.create(
-            author=self.user,
-            text='Тестовый пост',
-            group=self.group,
-            id='1',
-        )
         self.templates_pages_names = {
             reverse('posts:index'): 'posts/index.html',
             reverse(
@@ -60,8 +60,8 @@ class PostPagesTests(TestCase):
         post_object = response.context['page_obj'][0]
         self.assertEqual(post_object.text, self.post.text)
         self.assertEqual(post_object.pub_date, self.post.pub_date)
-        self.assertEqual(post_object.author.username, self.user.username)
-        self.assertEqual(post_object.group.title, self.group.title)
+        self.assertEqual(post_object.author, self.user)
+        self.assertEqual(post_object.group, self.group)
 
     def test_group_list_show_correct_context(self):
         """Список постов в шаблоне group_list равен ожидаемому контексту."""
@@ -72,16 +72,21 @@ class PostPagesTests(TestCase):
             response.context.get('group').title, 'Тестовая группа'
         )
         self.assertEqual(self.post.text, 'Тестовый пост')
+        self.assertEqual(self.post.author, self.user)
+        self.assertEqual(self.post.group, self.group)
         self.assertEqual(response.context.get('group').slug, 'test-slug')
+        self.assertEqual(response.context.get('group').description,
+                         'Тестовое описание')
 
     def test_profile_show_correct_context(self):
         """Список постов в шаблоне profile равен ожидаемому контексту."""
         response = self.authorized_client.get(
             reverse('posts:profile', kwargs={'username': self.user.username})
         )
+        post_object = response.context['page_obj'][0]
         self.assertIn('author', response.context)
-        self.assertEqual(response.context.get('author').username,
-                         self.user.username)
+        self.assertEqual(response.context.get('author'), self.user)
+        self.assertEqual(post_object.text, self.post.text)
 
     def test_post_detail_show_correct_context(self):
         """Шаблон post_detail сформирован с правильным контекстом."""
@@ -111,25 +116,28 @@ class PostPagesTests(TestCase):
 
     def test_check_group_not_in_mistake_group_list_page(self):
         """Проверяем чтобы созданный Пост с группой не попал в чужую группу."""
-        self.group_2 = Group.objects.create(
+        pages_num = 0
+        group_2 = Group.objects.create(
             title='Тестовая группа 2',
-            slug='test-slug-2',
+            slug='test-slug-22',
             description='Тестовое описание 2'
         )
-        PAGES_NUM = 0
+        Post.objects.create(group=self.group, author=self.user)
         response = self.authorized_client.get(reverse(
-            'posts:group_list', kwargs={'slug': self.group_2.slug}))
+            'posts:group_list', kwargs={'slug': group_2.slug}))
         self.assertEqual(response.context['page_obj'].paginator.count,
-                         PAGES_NUM)
+                         pages_num)
 
     def test_paginator(self):
-        self.post.delete()
+        """Проверяем работу страниц."""
+
         Post.objects.bulk_create(
             Post(
-                text=f'Текст {i}',
+                text=f'Текст {index}',
                 author=self.user,
                 group=self.group
-            ) for i in range(TEMP_NUMB_FIRST_PAGE + TEMP_NUMB_SECOND_PAGE))
+            ) for index in range(1, TEMP_NUMB_FIRST_PAGE +
+                                 TEMP_NUMB_SECOND_PAGE))
         pages = (
             (1, TEMP_NUMB_FIRST_PAGE),
             (2, TEMP_NUMB_SECOND_PAGE)
