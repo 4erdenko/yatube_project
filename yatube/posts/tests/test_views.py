@@ -196,20 +196,13 @@ class PostPagesTests(TestCase):
 
     def cache_test(self):
         """Проверяем работу кэша."""
-        post = Post.objects.create(
-            text='Кэш тест',
-            author=self.user
-        )
-        content_add = self.authorized_client.get(
-            reverse('posts:index')).content
-        post.delete()
-        content_delete = self.authorized_client.get(
-            reverse('posts:index')).content
-        self.assertEqual(content_add, content_delete)
+        response = self.client.get(reverse('posts:index'))
+        Post.objects.create(text='Текст', author=self.user)
+        cache_up = self.client.get(reverse('posts:index'))
+        self.assertEqual(response.content, cache_up.content)
         cache.clear()
-        content_cache_clear = self.authorized_client.get(
-            reverse('posts:index')).content
-        self.assertNotEqual(content_add, content_cache_clear)
+        cache_cleaned = self.client.get(reverse('posts:index'))
+        self.assertNotEqual(cache_up.content, cache_cleaned.content)
 
 
 class FollowViewsTest(TestCase):
