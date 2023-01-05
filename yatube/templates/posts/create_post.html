@@ -20,12 +20,16 @@
                 </div>
                 <div class="card-body">
                     {% include 'includes/error_control.html' %}
-                    {% if is_edit %}
-                        <form method="post" action="{% url 'posts:post_edit' post.id %}">
-                    {% else %}
-                        <form method="post" action="{% url 'posts:post_create' %}">
-                    {% endif %}
-                    {% csrf_token %}
+                    {% for field in form %}
+                        {% if is_edit %}
+                            <form method="post" enctype="multipart/form-data"
+                                  action="{% url 'posts:post_edit' post.id %}">
+                        {% else %}
+                            <form method="post" enctype="multipart/form-data"
+                                  action="{% url 'posts:post_create' %} ">
+                        {% endif %}
+                        {% csrf_token %}
+                    {% endfor %}
                     {% include 'includes/common_form.html' %}
                     {% if is_edit %}
                         <div class="col-md-6 offset-md-4">

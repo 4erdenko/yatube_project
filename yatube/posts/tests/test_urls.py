@@ -34,6 +34,11 @@ class PostURLTests(TestCase):
             f'/posts/{cls.post.id}/edit/': 'posts/create_post.html/',
             '/create/': 'posts/create_post.html/',
         }
+        cls.create_edit_template = {
+            '/create/': '/auth/login/?next=/create/',
+            f'/posts/{cls.post.id}/edit/':
+                f'/auth/login/?next=/posts/{cls.post.id}/edit/',
+        }
 
     def setUp(self):
         self.guest_client = Client()
@@ -58,12 +63,12 @@ class PostURLTests(TestCase):
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_create_url_redirect_anonymous_on_auth_login(self):
-        """Страница /create/ доступна авторизованному пользователю."""
-        response = self.guest_client.get('/create/', follow=True)
-        response_edit = self.guest_client.get(f'/posts/{self.post.id}/edit/')
-        self.assertRedirects(response, '/auth/login/?next=/create/')
-        self.assertRedirects(
-            response_edit, f'/auth/login/?next=/posts/{self.post.id}/edit/')
+        """Страница create/edit доступна авторизованному пользователю."""
+
+        for url, expected in self.create_edit_template.items():
+            with self.subTest(expected=expected):
+                response = self.guest_client.get(url, follow=True)
+                self.assertRedirects(response, expected)
 
     def test_unexisting_page_at_desired_location(self):
         """Страница /unexisting_page/ должна выдать ошибку."""
@@ -84,3 +89,9 @@ class PostURLTests(TestCase):
         not_author_client.force_login(user)
         response = not_author_client.get(f'/posts/{self.post.id}/edit/')
         self.assertRedirects(response, f'/posts/{self.post.id}/')
+
+    def test_custom_404(self):
+        """Несуществующий URL-адрес дает ответ кастомный 404"""
+        url = '/i-am-not-exists/'
+        response = self.authorized_client.get(url, follow=True)
+        self.assertTemplateUsed(response, 'core/404.html')

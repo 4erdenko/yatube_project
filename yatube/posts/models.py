@@ -34,6 +34,11 @@ class Post(models.Model):
                               related_name='posts',
                               help_text='Выберите группу'
                               )
+    image = models.ImageField(
+        'Картинка',
+        upload_to='posts/',
+        blank=True
+    )
 
     class Meta:
         ordering = ['-pub_date']
@@ -41,3 +46,37 @@ class Post(models.Model):
 
     def __str__(self):
         return self.text[:15]
+
+
+class Comment(models.Model):
+    post = models.ForeignKey(
+        Post, related_name='comments', on_delete=models.CASCADE)
+    author = models.ForeignKey(
+        User, related_name='comments', on_delete=models.CASCADE)
+    text = models.TextField(max_length=500,
+                            help_text='Напишите ваш комментарий')
+    created = models.DateTimeField(auto_now_add=True,
+                                   verbose_name='Дата публикации')
+
+    class Meta:
+        ordering = ['-created']
+
+    def __str__(self):
+        return self.text[:15]
+
+
+class Follow(models.Model):
+    user = models.ForeignKey(
+        User, related_name='follower', on_delete=models.CASCADE)
+    author = models.ForeignKey(
+        User, related_name='following', on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'], name='unique_follow'
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.user} follows {self.author}'

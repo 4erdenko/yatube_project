@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load thumbnail %}
 {% block title %} Пост {{ post|truncatechars:30 }} {% endblock title %}
 {% block content %}
     <main>
@@ -37,10 +38,15 @@
                 </ul>
             </aside>
             <article class="col-12 col-md-9">
+                {% thumbnail post.image "1260x339" crop="center" upscale=True as im %}
+                    <img class="card-img my-2" src="{{ im.url }}">
+                {% endthumbnail %}
                 <p>
                 <p>{{ post.text|linebreaksbr }}</p>
+                {% include 'posts/comments.html' %}
                 </p>
             </article>
+
         </div>
     </main>
 {% endblock %}
