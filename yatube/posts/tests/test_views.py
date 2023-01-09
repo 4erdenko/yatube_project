@@ -2,10 +2,11 @@ import shutil
 import tempfile
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
-from django.core.cache import cache
+
 from ..forms import PostForm
 from ..models import Post, Group, User, Comment, Follow
 
@@ -24,6 +25,7 @@ class PostPagesTests(TestCase):
         super().setUpClass()
         cls.authorized_author = Client()
         cls.user = User.objects.create_user(username="TestUser")
+        cls.author = User.objects.create_user(username='author')
         cls.small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
             b'\x01\x00\x80\x00\x00\x00\x00\x00'
@@ -60,6 +62,7 @@ class PostPagesTests(TestCase):
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
+        cache.clear()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
         self.templates_pages_names = {
@@ -204,46 +207,32 @@ class PostPagesTests(TestCase):
         cache_cleaned = self.client.get(reverse('posts:index'))
         self.assertNotEqual(cache_up.content, cache_cleaned.content)
 
-
-class FollowViewsTest(TestCase):
-    def setUp(self):
-        self.follower = User.objects.create_user(username='Follower')
-        self.authorized_client = Client()
-        self.authorized_client.force_login(self.follower)
-        self.author = User.objects.create_user(username='author')
-        self.post_author = Post.objects.create(
-            text='текст автора',
-            author=self.author,
-        )
-
     def test_follow_author(self):
         follow_count = Follow.objects.count()
         response = self.authorized_client.get(
             reverse('posts:profile_follow', args={self.author}))
         self.assertEqual(Follow.objects.count(), follow_count + 1)
-        last_follow = Follow.objects.latest('id')
+        last_follow = Follow.objects.last()
         self.assertEqual(last_follow.author, self.author)
-        self.assertEqual(last_follow.user, self.follower)
+        self.assertEqual(last_follow.user, self.user)
         self.assertRedirects(response, reverse(
             'posts:profile', args={self.author}))
 
     def test_unfollow_author(self):
+        Follow.objects.create(user=self.user, author=self.author)
         follow_count = Follow.objects.count()
-        self.authorized_client.get(
-            reverse('posts:profile_follow', args={self.author}))
         response = self.authorized_client.get(
             reverse('posts:profile_unfollow', args={self.author}))
+        self.assertEqual(Follow.objects.count(), follow_count - 1)
         self.assertRedirects(response, reverse(
             'posts:profile', args={self.author}))
-        self.assertEqual(Follow.objects.count(), follow_count)
 
     def test_new_post_follow(self):
-        self.authorized_client.get(
-            reverse('posts:profile_follow', args={self.author}))
-        response = self.authorized_client.get(
-            reverse('posts:follow_index'))
-        post_follow = response.context['page_obj'][0]
-        self.assertEqual(post_follow, self.post_author)
+        """Проверка появления нового поста в ленте."""
+        Follow.objects.create(user=self.user, author=self.author)
+        Post.objects.create(text='Текст', author=self.author)
+        response = self.authorized_client.get(reverse('posts:follow_index'))
+        self.assertEqual(len(response.context['page_obj']), 1)
 
     def test_new_post_unfollow(self):
         new_author = User.objects.create_user(username='new_author')

@@ -1,10 +1,9 @@
 {% extends 'base.html' %}
 {% load thumbnail %}
 {% block title %}Последние обновления на сайте{% endblock title %}
-{% load cache %}
 {% block content %}
-    {% include 'posts/switcher.html' %}
-    {% cache 20 index_page %}
+
+    {% include 'includes/menu.html' with index=True %}
         {% for post in page_obj %}
             <div class="container-xl py-2">
                 <ul>
@@ -32,5 +31,4 @@
             </div>
         {% endfor %}
         {% include 'posts/paginator.html' %}
-    {% endcache %}
 {% endblock %}

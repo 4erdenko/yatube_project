@@ -144,7 +144,7 @@ class PostFormTests(TestCase):
         )
 
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
-        self.assertIn(response.url, '/auth/login/?next=/posts/1/comment/')
+        self.assertRedirects(response, '/auth/login/?next=/posts/1/comment/')
         self.assertEqual(Comment.objects.count(), 0)
 
     def test_auth_user_can_comment_post(self):
@@ -160,11 +160,6 @@ class PostFormTests(TestCase):
             'post_id': self.post.pk
         }))
         self.assertEqual(Comment.objects.count(), 1)
-        self.assertTrue(
-            Comment.objects.filter(
-                text=self.form_comment_data['text'],
-            ).exists()
-        )
         self.assertEqual(
             response.context['post'].comments.all()[0].text,
             self.form_comment_data['text']

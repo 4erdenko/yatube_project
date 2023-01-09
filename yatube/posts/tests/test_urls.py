@@ -1,5 +1,6 @@
 from http import HTTPStatus
 
+from django.core.cache import cache
 from django.test import Client, TestCase
 
 from ..models import Post, Group, User
@@ -41,6 +42,7 @@ class PostURLTests(TestCase):
         }
 
     def setUp(self):
+        cache.clear()
         self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(PostURLTests.user)
@@ -91,7 +93,7 @@ class PostURLTests(TestCase):
         self.assertRedirects(response, f'/posts/{self.post.id}/')
 
     def test_custom_404(self):
-        """Несуществующий URL-адрес дает ответ кастомный 404"""
-        url = '/i-am-not-exists/'
-        response = self.authorized_client.get(url, follow=True)
+        """Проверка на кастомную страницу 404."""
+        response = self.guest_client.get('/unexisting_page/')
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, 'core/404.html')
