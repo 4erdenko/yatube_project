@@ -2,7 +2,6 @@
 {% load thumbnail %}
 {% block title %}Последние обновления на сайте{% endblock title %}
 {% block content %}
-
     {% include 'includes/menu.html' with index=True %}
         {% for post in page_obj %}
             <div class="container-xl py-2">

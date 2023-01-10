@@ -161,6 +161,6 @@ class PostFormTests(TestCase):
         }))
         self.assertEqual(Comment.objects.count(), 1)
         self.assertEqual(
-            response.context['post'].comments.all()[0].text,
+            Comment.objects.last().text,
             self.form_comment_data['text']
         )

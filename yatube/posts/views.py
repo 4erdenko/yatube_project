@@ -18,7 +18,7 @@ def paginate_page(queryset, request):
     return page_obj
 
 
-@cache_page(20 * 15)
+@cache_page(20, key_prefix='index_page')
 def index(request):
     posts = Post.objects.select_related('author', 'group')
     title = 'Последние обновления на сайте'
@@ -58,12 +58,12 @@ def profile(request, username):
 
 def post_detail(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
+    comments = post.comments.select_related('author')
     form = CommentForm()
     context = {
         'post': post,
+        'comments': comments,
         'form': form,
-        'comment': post.comments.all(),
-
     }
     return render(request, 'posts/post_detail.html', context)
 
